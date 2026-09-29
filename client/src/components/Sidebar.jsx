@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { dayWord } from '../lib/i18n';
 import AiStatusChip from './AiStatusChip';
 import { getAdapter } from '../lib/storage';
+import { localMode } from '../api';
 
 export default function Sidebar() {
   const { user, logout, streak, refreshStreak, t, lang } = useAuth();
@@ -23,6 +24,14 @@ export default function Sidebar() {
   useEffect(() => {
     refreshStreak();
   }, [refreshStreak]);
+
+  // Offline badge: the API was unreachable, so this tab runs on
+  // browser data (same features, this device only).
+  const [offline, setOffline] = useState(() => localMode());
+  useEffect(() => {
+    const id = setInterval(() => setOffline(localMode()), 2000);
+    return () => clearInterval(id);
+  }, []);
 
   const hideStreak = (() => {
     try {
@@ -61,6 +70,11 @@ export default function Sidebar() {
       </nav>
       <div className="border-t border-line px-5 py-4">
         <AiStatusChip />
+        {offline && (
+          <p className="mt-1 text-sm font-medium" role="status">
+            {t('nav.offline')}
+          </p>
+        )}
         {!hideStreak && (
         <p className="mt-2 text-sm text-muted">
           {streak === null ? (

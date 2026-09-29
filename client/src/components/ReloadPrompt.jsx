@@ -4,7 +4,11 @@ import { useAuth } from '../context/AuthContext';
 
 export default function ReloadPrompt() {
   const { t } = useAuth();
-  const { needRefresh, updateServiceWorker } = useRegisterSW();
+  // NOTE: useRegisterSW returns tuples ([value, setter]) in v1.x —
+  // a bare `needRefresh` object is always truthy and the prompt
+  // would never go away. Destructure the boolean out.
+  const { needRefresh: [needRefresh], updateServiceWorker } =
+    useRegisterSW();
   if (!needRefresh) return null;
   return (
     <div

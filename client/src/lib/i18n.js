@@ -287,7 +287,7 @@ const en = {
 
   'nav.tutor': 'Tutor',
   'nav.today': 'Today',
-  'today.title': 'Today',
+  'nav.offline': 'Offline data (this device)',  'today.title': 'Today',
   'today.planLine': '{n} due · about {m} min',
   'today.weakLine': 'Most due in {name}.',
   'today.startPlan': 'Start today’s plan',
@@ -1007,6 +1007,7 @@ const ru = {
 
   'nav.tutor': 'Наставник',
   'nav.today': 'Сегодня',
+  'nav.offline': 'Офлайн-данные (это устройство)',
   'today.title': 'Сегодня',
   'today.planLine': 'К повторению: {n} · около {m} мин',
   'today.weakLine': 'Больше всего — в «{name}».',
@@ -1729,6 +1730,7 @@ const lt = {
 
   'nav.tutor': 'Mokytojas',
   'nav.today': 'Šiandien',
+  'nav.offline': 'Neprisijungus (šis įrenginys)',
   'today.title': 'Šiandien',
   'today.planLine': 'Kartoti: {n} · apie {m} min',
   'today.weakLine': 'Daugiausia – „{name}“.',
