@@ -7,7 +7,7 @@
     "scripts":  {
                     "start":  "node index.js",
                     "dev":  "nodemon index.js",
-                        "test": "node --test test/sm2.test.js test/ai.test.js test/reviews.test.js test/reviewStats.test.js",
+                        "test": "node --test test/sm2.test.js test/ai.test.js test/reviews.test.js test/reviewStats.test.js test/appearance.test.js",
                     "seed":  "node seed.js"
                 },
     "dependencies":  {

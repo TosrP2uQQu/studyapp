@@ -462,3 +462,30 @@ existing equivalent instead and marked the step accordingly:
 - CARRY: Tatoeba/OpenStax decks (need two-source verification
   pass), Quizlet login-based import (out of scope), Anki .apkg
   binary import.
+
+## T9. Platform polish (done)
+- PWA: vite-plugin-pwa (precache app shell, 31 entries, prompt
+  registration), manifest (start_url/scope './', standalone),
+  SVG icon, theme-color + apple-touch + viewport-fit, "New
+  version — reload" toast, Install button + iOS one-liner in
+  Settings Help. `build:pages` + check-dist green. PNG raster
+  icons carried (no imager offline).
+- Themes: light/dark/system/high-contrast/sepia/AMOLED
+  (dataset.theme tokens; .dark kept for legacy; rating hues
+  untouched) + accent picker (existing) + line-height and
+  letter-spacing sliders (server enums + defaults extended,
+  old records backfilled, 2 new server tests). Dyslexia webfont
+  NOT shipped (glyph test unverifiable offline); spacing
+  sliders are the honest substitute.
+- A11y: skip-to-content link + main id, Toast already
+  role=status, grading aria-live exists, 44px targets on new
+  controls, real radios/checkboxes, ? sheet Esc-closes.
+- Perf: route-level lazy splitting — main 349 KB raw /
+  122 KB gzip (budget 250 KB gzip: PASS); pages 3–30 KB each;
+  Tutor 24 KB, Today 12 KB, Settings 29 KB. KaTeX never
+  bundled; fonts still Google-CDN (self-host carried).
+- i18n: +17 keys en/ru/lt.
+- Full gate: server 31/31 + client 106/106 + build:pages green.
+- CARRY: PNG icons, self-hosted woff2 (latin-ext+cyrillic),
+  KaTeX lazy render, modal focus trap/restore, safe-area
+  audit, 16px input audit, font-contrast re-audit.

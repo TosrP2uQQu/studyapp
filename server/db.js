@@ -85,6 +85,8 @@ function defaultAppearance() {
     flipStyle: 'flip',
     reduceMotion: 'system',
     uiLang: 'en',
+    lineHeight: 'normal',
+    letterSpacing: 'normal',
   };
 }
 

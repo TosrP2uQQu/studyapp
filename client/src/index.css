@@ -29,6 +29,56 @@
   --ok: #d3b876;
 }
 
+/* Explicit themes (dataset.theme is the source; .dark stays for
+   legacy selectors). Rating hues keep fixed meanings everywhere. */
+html[data-theme='contrast'] {
+  --bg: #000000;
+  --surface: #000000;
+  --text: #ffffff;
+  --muted: #e8e8e8;
+  --border: #ffffff;
+  --mastery: #00ff88;
+  --hard: #ff6b5e;
+  --ok: #ffd60a;
+}
+
+html[data-theme='sepia'] {
+  --bg: #f4ecd8;
+  --surface: #fffbf0;
+  --text: #433422;
+  --muted: #6b5d4f;
+  --border: #e0d5bd;
+  --mastery: #3f6b4f;
+  --hard: #9c4a3c;
+  --ok: #a88b3f;
+}
+
+html[data-theme='amoled'] {
+  --bg: #000000;
+  --surface: #0a0a0a;
+  --text: #edefec;
+  --muted: #9aa39d;
+  --border: #2a2a2a;
+  --mastery: #7fae8d;
+  --hard: #d08476;
+  --ok: #d3b876;
+}
+
+/* Skip-to-content link: visible on focus only. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--ink);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 0 0 0.5rem 0;
+}
+.skip-link:focus {
+  left: 0;
+}
+
 body {
   background-color: var(--bg);
   color: var(--text);

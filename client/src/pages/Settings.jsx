@@ -10,6 +10,7 @@ import Spinner from '../components/Spinner';
 import { OLLAMA_SUGGESTION, testOllama } from '../lib/aiClient';
 import AiDiagnostics from '../components/AiDiagnostics';
 import { getBrowserKey, setBrowserKey } from '../lib/keys';
+import InstallApp from '../components/InstallApp';
 import { getAdapter } from '../lib/storage';
 
 function loadWellbeing() {
@@ -385,9 +386,38 @@ export default function Settings({ notify }) {
               { value: 'light', label: t('set.light') },
               { value: 'dark', label: t('set.dark') },
               { value: 'system', label: t('set.system') },
+              { value: 'contrast', label: t('set.contrast') },
+              { value: 'sepia', label: t('set.sepia') },
+              { value: 'amoled', label: t('set.amoled') },
             ]}
             value={appearance.theme}
             onChange={(v) => setA({ theme: v })}
+          />
+        </Row>
+        <Row>
+          <Segmented
+            name="line-height"
+            label={t('set.lineHeight')}
+            options={[
+              { value: 'normal', label: t('set.lhNormal') },
+              { value: 'relaxed', label: t('set.lhRelaxed') },
+              { value: 'loose', label: t('set.lhLoose') },
+            ]}
+            value={appearance.lineHeight || 'normal'}
+            onChange={(v) => setA({ lineHeight: v })}
+          />
+        </Row>
+        <Row>
+          <Segmented
+            name="letter-spacing"
+            label={t('set.letterSpacing')}
+            options={[
+              { value: 'normal', label: t('set.lsNormal') },
+              { value: 'wide', label: t('set.lsWide') },
+              { value: 'wider', label: t('set.lsWider') },
+            ]}
+            value={appearance.letterSpacing || 'normal'}
+            onChange={(v) => setA({ letterSpacing: v })}
           />
         </Row>
         <Row>
@@ -595,6 +625,9 @@ export default function Settings({ notify }) {
           <p className="mt-2 text-sm text-muted">
             {t('set.replayHelp')} <Link to="/tutorial" className="font-semibold text-ink hover:underline">{t('set.replayLink')}</Link>
           </p>
+          <div className="mt-2">
+            <InstallApp />
+          </div>
         </div>
       </Section>
 
