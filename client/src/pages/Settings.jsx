@@ -8,6 +8,8 @@ import Combobox from '../components/Combobox';
 import FlashCard from '../components/FlashCard';
 import Spinner from '../components/Spinner';
 import { OLLAMA_SUGGESTION, testOllama } from '../lib/aiClient';
+import AiDiagnostics from '../components/AiDiagnostics';
+import { getBrowserKey, setBrowserKey } from '../lib/keys';
 import { cardWord } from '../lib/i18n';
 
 const inputCls =
@@ -64,6 +66,7 @@ export default function Settings({ notify }) {
   const [newPw, setNewPw] = useState('');
   const [newPw2, setNewPw2] = useState('');
   const [delPw, setDelPw] = useState('');
+  const [rememberKey, setRememberKey] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const [saving, setSaving] = useState(false);
@@ -171,6 +174,11 @@ export default function Settings({ notify }) {
       const { data } = await api.put('/users/me/ai-settings', body);
       setKeyLast4(data.ai?.keyLast4 || '');
       setConfigured(Boolean(data.ai?.configured));
+      // Browser copy for the tutor/diagnostics: session-only unless
+      // "Remember on this device" is checked. Never logged.
+      if ((CLOUD.includes(aiProvider) || aiProvider === 'custom') && apiKey.trim()) {
+        setBrowserKey(aiProvider, apiKey.trim(), rememberKey);
+      }
       setApiKey('');
       await refreshMe();
       notify(t('set.aiSaved'), 'success');
@@ -216,6 +224,7 @@ export default function Settings({ notify }) {
   const disconnectAi = async () => {
     try {
       await api.put('/users/me/ai-settings', { provider: 'none' });
+      setBrowserKey(aiProvider, '', false);
       setAiProvider('none');
       setApiKey('');
       setKeyLast4('');
@@ -600,6 +609,16 @@ export default function Settings({ notify }) {
                 autoComplete="off"
                 className={inputCls}
               />
+              <p className="mt-2 text-sm text-muted">{t('set.browserKeyHint')}</p>
+              <label className="mt-1 flex cursor-pointer items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={rememberKey}
+                  onChange={(e) => setRememberKey(e.target.checked)}
+                  className="h-4 w-4 accent-[var(--ink)]"
+                />
+                {t('set.rememberKey')}
+              </label>
             </div>
           </Row>
         )}
@@ -716,6 +735,14 @@ export default function Settings({ notify }) {
                 </div>
               </Row>
             )}
+            <Row>
+              <AiDiagnostics
+                provider={aiProvider}
+                apiKey={apiKey.trim() || getBrowserKey(aiProvider)}
+                baseUrl={baseUrl.trim()}
+                model={model.trim()}
+              />
+            </Row>
           </>
         )}
       </Section>

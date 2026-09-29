@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { dayWord } from '../lib/i18n';
+import AiStatusChip from './AiStatusChip';
 
 export default function Sidebar() {
   const { user, logout, streak, refreshStreak, t, lang } = useAuth();
@@ -46,7 +47,8 @@ export default function Sidebar() {
         ))}
       </nav>
       <div className="border-t border-line px-5 py-4">
-        <p className="text-sm text-muted">
+        <AiStatusChip />
+        <p className="mt-2 text-sm text-muted">
           {streak === null ? (
             t('nav.streakLoading')
           ) : streak === 0 ? (

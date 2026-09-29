@@ -8,7 +8,8 @@
                     "build":  "vite build",
                     "build:pages": "vite build && node scripts/check-dist.mjs",
                     "preview":  "vite preview --port 5173",
-                    "test":  "vitest run"
+                    "test":  "vitest run",
+                    "ai-smoke": "node scripts/ai-smoke.mjs"
                 },
     "dependencies":  {
                          "axios":  "^1.7.2",

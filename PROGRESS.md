@@ -323,3 +323,29 @@ existing equivalent instead and marked the step accordingly:
   profile.*, nav.profile, set.replay*). Parity held.
 - CARRY: searchable 38-language UI picker (only en/ru/lt UI
   strings exist), guest mode, avatar in sidebar.
+
+## T3. AI that actually works (done)
+- New `lib/llm.js`: one `generate()` for gemini (default,
+  `x-goog-api-key` + `?key=` retry, JSON + schema, thinkingBudget 0
+  with retry-without, SSE stream + non-stream fallback, model
+  discovery), OpenAI-compatible (openai/groq/mistral/custom),
+  Anthropic (direct-browser headers), Ollama (browser, reused).
+  JSON repair (fences/prose/trailing commas) + required-keys check
+  + one "JSON only" retry; queue (concurrency 1, 800 ms spacing);
+  25 s timeout + caller Cancel; <=2 retries on 429/5xx honoring
+  Retry-After; taxonomy (bad-key/quota/offline/blocked-cors/
+  timeout/bad-response) with actions; prompt-hash cache;
+  `aiContext()` on every call. Tests: `test/llm.test.js` (16,
+  mocked fetch), 64/64 client green.
+- `lib/keys.js`: browser-only keys (session default, remember
+  opt-in). Settings saves a browser copy on Save, clears on
+  disconnect; Diagnostics (test key + latency, list models,
+  last 5 errors, redacted copy) runs on the form/browser key.
+- Status chip (ready/rate-limited/off, icon+text) in sidebar.
+- Smart Import: transcript mode (timestamp chunks), offline
+  sorter + dedupe + "N cards, K skipped" summary wired into
+  DeckEditor, "Structure with AI" (same JSON shape).
+- `scripts/ai-smoke.mjs` + `npm run ai-smoke` (env key, PASS/FAIL,
+  never prints key; verified clean-fail without key).
+- CARRY: photo-vision + PDF import UI, server-key migration to
+  browser-only, quiz/grading still on server paths.
