@@ -489,3 +489,23 @@ existing equivalent instead and marked the step accordingly:
 - CARRY: PNG icons, self-hosted woff2 (latin-ext+cyrillic),
   KaTeX lazy render, modal focus trap/restore, safe-area
   audit, 16px input audit, font-contrast re-audit.
+
+## T10. Free-form + final QA (done)
+- 3 extras, each in `docs/FEATURES.md` with rationale + basis:
+  SD0/SD1 share codes (copy in DeckEditor, import in Explore,
+  round-trip + fallback tests), confidence step (Settings
+  toggle, 1–3 pre-reveal, server+mirror+summary trail),
+  stubborn-card panel (split via CRUD, tutor/video links).
+  Privacy panel added (Settings → Privacy: honest copy +
+  AI/YouTube/Wikipedia list). i18n now 695/695/695, zero
+  placeholder mismatches (script-verified).
+- FINAL QA: server 31/31, client 111/111, `build:pages` +
+  check-dist green, secret grep clean (only the scanner regex
+  itself), ai-smoke clean-fails without key. Playwright: no
+  browsers installed — smoke deferred to your machine.
+- Docs: README rewritten (features/Pages/keys/privacy),
+  FEATURES.md, BUGS_FIXED.md, CREDITS.md, DEMO_SCRIPT.md.
+- NOT done (carries): Supabase/RLS, WebLLM, study groups,
+  Paths unlocks, card drawer, Deck Insights charts, cloze/
+  speaking/learn-path/mock-exam, backlog spread, suspend/bury,
+  PNG icons, self-hosted fonts, KaTeX, photo/PDF import UI.

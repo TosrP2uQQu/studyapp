@@ -625,6 +625,13 @@ export default function Settings({ notify }) {
           <p className="mt-2 text-sm text-muted">
             {t('set.replayHelp')} <Link to="/tutorial" className="font-semibold text-ink hover:underline">{t('set.replayLink')}</Link>
           </p>
+          <Toggle
+            id="study-confidence"
+            label={t('set.confidence')}
+            hint={t('set.confidenceHint')}
+            checked={wb.confidence === true}
+            onChange={(v) => setWellbeing({ confidence: v })}
+          />
           <div className="mt-2">
             <InstallApp />
           </div>
@@ -879,6 +886,23 @@ export default function Settings({ notify }) {
             checked={wb.hideStreak === true}
             onChange={(v) => setWellbeing({ hideStreak: v })}
           />
+        </Row>
+      </Section>
+
+      <Section title={t('set.privacy')}>
+        <Row>
+          <p className="py-3 text-sm leading-relaxed text-muted">
+            {t('set.privacyBody')}
+          </p>
+        </Row>
+        <Row>
+          <p className="py-2 text-sm text-muted">{t('set.privacyAi')}</p>
+        </Row>
+        <Row>
+          <p className="py-2 text-sm text-muted">{t('set.privacyYt')}</p>
+        </Row>
+        <Row>
+          <p className="py-2 text-sm text-muted">{t('set.privacyWiki')}</p>
         </Row>
       </Section>
 

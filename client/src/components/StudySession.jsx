@@ -86,6 +86,17 @@ export default function StudySession({
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [blitzLeft, setBlitzLeft] = useState(60);
   const [voices, setVoices] = useState([]);
+  // Optional confidence step (Settings → Study, default off):
+  // "How sure am I?" 1–3 before reveal, stored in the review log.
+  const [confidence, setConfidence] = useState(null);
+  const confidenceOn = (() => {
+    try {
+      const wb = getAdapter().get('wellbeing') || {};
+      return wb.confidence === true;
+    } catch {
+      return false;
+    }
+  })();
   // Full session record for the summary grid (never removed by undo).
   const [sessionLog, setSessionLog] = useState([]);
   const startIndex = () => {
@@ -226,6 +237,7 @@ export default function StudySession({
     setWrittenText('');
     setGrade(null);
     setSuggested(null);
+    setConfidence(null);
   }, []);
 
   // Grade one written answer. Returns { tier, explanation, aiGraded }.
@@ -344,6 +356,7 @@ export default function StudySession({
           rating: value,
           mode: mode || 'flip',
           ms,
+          confidence,
         });
         // Local mirror of the append-only log (instant UI, offline-safe).
         try {
@@ -354,6 +367,7 @@ export default function StudySession({
             rating: value,
             mode: mode || 'flip',
             ms,
+            confidence,
             newInterval:
               data && typeof data.interval === 'number'
                 ? data.interval
@@ -372,7 +386,7 @@ export default function StudySession({
             ms,
           },
         ]);
-        setSessionLog((s) => [...s, { card, rating: value, ms }]);
+        setSessionLog((s) => [...s, { card, rating: value, ms, confidence }]);
         try {
           awardReviewXp(who, { rating: value, ms, overdue });
         } catch {
@@ -728,6 +742,11 @@ export default function StudySession({
                     {typeof e.ms === 'number' && (
                       <span>{(e.ms / 1000).toFixed(0)}s</span>
                     )}
+                    {e.confidence && (
+                      <span title={t('study.confidence')}>
+                        c{e.confidence}
+                      </span>
+                    )}
                   </span>
                 </li>
               ))}
@@ -880,6 +899,24 @@ export default function StudySession({
               </div>
             )}
             <FlashCard front={card.front} back={card.back} flipped={flipped} flipStyle={flipStyle} onFlip={() => setFlipped((f) => !f)} />
+            {confidenceOn && !flipped && !needGuess && (
+              <div className="mt-3 flex items-center gap-2" role="radiogroup" aria-label={t('study.confidence')}>
+                <span className="text-sm text-muted">{t('study.confidence')}</span>
+                {[1, 2, 3].map((n) => (
+                  <button
+                    key={n}
+                    role="radio"
+                    aria-checked={confidence === n}
+                    onClick={() => setConfidence(n)}
+                    className={`min-h-[44px] min-w-[44px] rounded-lg border px-3 py-1.5 text-sm font-semibold ${
+                      confidence === n ? 'border-ink bg-ink text-white' : 'border-line'
+                    }`}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </div>
+            )}
             {speechSupported() && !needGuess && (
               <button
                 onClick={speak}

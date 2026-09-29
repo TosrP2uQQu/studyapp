@@ -5,6 +5,7 @@ import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import STARTER_DECKS from '../data/starter-decks.json';
 import { fetchSummary } from '../lib/wiki';
+import { decodeDeck } from '../lib/share';
 
 export default function Explore({ notify }) {
   const { t, lang } = useAuth();
@@ -13,6 +14,8 @@ export default function Explore({ notify }) {
   const [topic, setTopic] = useState('');
   const [wiki, setWiki] = useState(null);
   const [wikiBusy, setWikiBusy] = useState(false);
+  const [code, setCode] = useState('');
+  const [codeBusy, setCodeBusy] = useState(false);
 
   const addDeck = async (bundle) => {
     setAdding(bundle.id);
@@ -36,6 +39,31 @@ export default function Explore({ notify }) {
       notify(err.response?.data?.error || t('set.saveFailed'), 'error');
     } finally {
       setAdding(null);
+    }
+  };
+
+  const importCode = async () => {
+    if (!code.trim() || codeBusy) return;
+    setCodeBusy(true);
+    try {
+      const parsed = await decodeDeck(code.trim());
+      const { data: deck } = await api.post('/decks', {
+        name: parsed.name,
+        subject: '',
+        type: 'general',
+      });
+      await api.post(`/decks/${deck.id}/cards`, { cards: parsed.cards });
+      setCode('');
+      notify(t('share.imported', { n: parsed.cards.length }), 'success');
+    } catch (err) {
+      notify(
+        err.message === 'bad-code' || err.message === 'empty'
+          ? t('share.badCode')
+          : t('set.saveFailed'),
+        'error'
+      );
+    } finally {
+      setCodeBusy(false);
     }
   };
 
@@ -126,6 +154,28 @@ export default function Explore({ notify }) {
             </p>
           </div>
         )}
+      </div>
+
+      <div className="mt-6 rounded-2xl bg-surface p-5 shadow-md">
+        <h2 className="font-serif text-xl font-semibold">
+          {t('share.importTitle')}
+        </h2>
+        <div className="mt-2 flex gap-2">
+          <input
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder={t('share.importPh')}
+            aria-label={t('share.importPh')}
+            className="min-h-[44px] flex-1 rounded-lg border border-line bg-canvas px-3 py-2 font-mono text-sm focus:border-ink focus:outline-none"
+          />
+          <button
+            onClick={importCode}
+            disabled={codeBusy || !code.trim()}
+            className="min-h-[44px] rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {t('share.importGo')}
+          </button>
+        </div>
       </div>
       <div className="h-8" />
     </div>

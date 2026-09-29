@@ -56,15 +56,17 @@ export default function RecallSheet({ notify }) {
   const [filter, setFilter] = useState('all');
   const [hardestFirst, setHardestFirst] = useState(false);
 
+  const load = async () => {
+    try {
+      const { data } = await api.get(`/decks/${id}/recall-sheet`);
+      setData(data);
+    } catch (err) {
+      notify(err.response?.data?.error || t('recall.loadFailed'), 'error');
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await api.get(`/decks/${id}/recall-sheet`);
-        setData(data);
-      } catch (err) {
-        notify(err.response?.data?.error || t('recall.loadFailed'), 'error');
-      }
-    })();
+    load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -91,6 +93,36 @@ export default function RecallSheet({ notify }) {
   }, [data, filter, hardestFirst]);
 
   if (!data) return <Spinner />;
+
+  // Stubborn-card panel: split into two halves (same back, edit
+  // each after), ask the tutor, or find videos. Friendly, no shame.
+  const splitCard = async (c) => {
+    const words = String(c.front || '').split(/\s+/).filter(Boolean);
+    if (words.length < 4) {
+      notify(t('leech.cant'), 'error');
+      return;
+    }
+    const half = Math.ceil(words.length / 2);
+    try {
+      await api.post(`/decks/${id}/cards`, {
+        cards: [
+          {
+            front: words.slice(0, half).join(' ') + ' (1/2)',
+            back: c.back,
+          },
+          {
+            front: words.slice(half).join(' ') + ' (2/2)',
+            back: c.back,
+          },
+        ],
+      });
+      await api.delete(`/decks/${id}/cards/${c.id}`);
+      notify(t('leech.splitDone'), 'success');
+      load();
+    } catch (err) {
+      notify(err.response?.data?.error || t('set.saveFailed'), 'error');
+    }
+  };
 
   return (
     <div className="max-w-3xl">
@@ -156,6 +188,28 @@ export default function RecallSheet({ notify }) {
                 </span>
               )}
             </div>
+            {c.stats?.leech && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  onClick={() => splitCard(c)}
+                  className="min-h-[44px] rounded-lg border border-line px-3 py-1.5 text-sm font-medium hover:bg-surface"
+                >
+                  {t('leech.split')}
+                </button>
+                <Link
+                  to={`/tutor?deck=${id}&card=${c.id}`}
+                  className="min-h-[44px] rounded-lg border border-line px-3 py-1.5 text-sm font-medium leading-8 hover:bg-surface"
+                >
+                  {t('tutor.askTutor')}
+                </Link>
+                <Link
+                  to={`/tutor?deck=${id}&card=${c.id}&tab=videos`}
+                  className="min-h-[44px] rounded-lg border border-line px-3 py-1.5 text-sm font-medium leading-8 hover:bg-surface"
+                >
+                  {t('tutor.tabVideos')}
+                </Link>
+              </div>
+            )}
             <p className="mt-0.5 text-right text-sm text-muted">{c.back}</p>
           </div>
         ))}

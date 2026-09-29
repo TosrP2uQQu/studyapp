@@ -23,6 +23,7 @@ import {
   toJson,
   toTsv,
 } from '../lib/importers';
+import { encodeDeck } from '../lib/share';
 
 export const LANGS = [
   { code: 'en', name: 'English' },
@@ -615,6 +616,20 @@ export default function DeckEditor({ notify }) {
               className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold hover:bg-canvas"
             >
               {t('editor.print')}
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  const code = await encodeDeck(deck);
+                  await navigator.clipboard.writeText(code);
+                  notify(t('share.copied'), 'success');
+                } catch {
+                  notify(t('set.testFailed'), 'error');
+                }
+              }}
+              className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold hover:bg-canvas"
+            >
+              {t('share.copy')}
             </button>
             <Link to={`/decks/${id}/quiz`} className="rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
               {t('editor.quizMe')}

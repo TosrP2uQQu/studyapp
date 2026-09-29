@@ -33,6 +33,9 @@ export function logReview(entry, adapter) {
     rating: entry.rating,
     mode: entry.mode || 'flip',
     ms: entry.ms == null ? null : entry.ms,
+    confidence: [1, 2, 3].includes(entry.confidence)
+      ? entry.confidence
+      : null,
     prevInterval: entry.prevInterval ?? null,
     newInterval: entry.newInterval ?? null,
     undone: false,
