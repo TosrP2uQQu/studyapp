@@ -7,6 +7,8 @@ import Toast from './components/Toast';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Onboarding from './pages/Onboarding';
+import Tutorial from './pages/Tutorial';
+import Profile from './pages/Profile';
 import Dashboard from './pages/Dashboard';
 import DeckEditor from './pages/DeckEditor';
 import Study from './pages/Study';
@@ -44,6 +46,15 @@ function Shell() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/tutorial"
+          element={
+            <ProtectedRoute>
+              <Tutorial />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/profile" element={wrap(<Profile notify={notify} />)} />
         <Route path="/" element={wrap(<Dashboard notify={notify} />)} />
         <Route path="/decks/new" element={wrap(<DeckEditor notify={notify} />, true)} />
         <Route path="/decks/:id/edit" element={wrap(<DeckEditor notify={notify} />)} />

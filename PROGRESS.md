@@ -301,3 +301,25 @@ existing equivalent instead and marked the step accordingly:
 - CARRY: Dexie/IndexedDB migration (interface ready, still
   localStorage), modal focus trap + safe-area + font audit (T9),
   AI race/abort fixes (T3), Listening mode voices (T7).
+
+## T2. Accounts, onboarding, tutorial (done)
+- Onboarding is now a 4-step wizard with progress dots: (1) UI
+  language (instant preview, unchanged) + "Languages I'm learning"
+  multi-select (38 deck langs, max 6); (2) Goal (exam/language/
+  knowledge/work) setting days+minutes presets; (3) first deck +
+  examples; (4) guessing note + AI choice (add key / skip /
+  offline). Goal+langs+AI stored browser-side per username.
+  No learning-styles quiz. Finish routes to /tutorial for new
+  accounts. Tests: `test/tutorial-profile.test.js`, 41/41 green.
+- Tutorial (`/tutorial`, protected): 6 steps on a sandbox deck
+  (5 LT cards, browser-only). Flip, rate (writes the real local
+  review mirror, history strip is genuine), paste/tutor teaser,
+  "Start today's plan". Skip on every step, Esc skips, step
+  resumes, `TUTORIAL_VERSION=1`, replay in Settings Help.
+- Profile (`/profile`, sidebar link): display name, emoji avatar
+  picker (no uploads), learning langs, link to Settings for
+  backup/delete. Zero server changes (adapter store).
+- i18n: +35 keys en/ru/lt (tut.*, onboard.goal*/ai*/learnLangs,
+  profile.*, nav.profile, set.replay*). Parity held.
+- CARRY: searchable 38-language UI picker (only en/ru/lt UI
+  strings exist), guest mode, avatar in sidebar.
