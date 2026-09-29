@@ -278,3 +278,26 @@ existing equivalent instead and marked the step accordingly:
 - Still missing (scheduled below): browser StorageAdapter/IndexedDB
   (T1), first-run tutorial + profile (T2), browser Gemini LLM core
   (T3), reviews-log rating history (T4).
+
+## T1. Foundation + bug hunt (done)
+- Server: `reviews.json` append-only log written in the same tick
+  as the SM-2 update (mode/ms/confidence included); `prev`
+  snapshot on every progress row; `POST /undo` restores it once
+  (409 on stale). SM-2 gained an explicit q<3 relearning reset
+  (backward compatible). Tests: `server/test/reviews.test.js`,
+  16/16 server green.
+- Client libs: `storage.js` (adapter interface + LocalAdapter with
+  quota/memory fallback + `requestPersistence` + session cursor),
+  `day.js` (04:00 rollover, DST-safe due strings), `text.js`
+  (NFC, accent-insensitive search, collator, import guards),
+  `reviews.js` (log mirror, undo depth 10, leech rule,
+  difficulty 0-100, rate guard). Tests:
+  `client/test/foundation.test.js` (15 tests), 38/38 client green.
+- StudySession: local review mirror + undo stack (button +
+  Ctrl/Cmd+Z), resume cursor per deck, ms timing, IME-safe keys,
+  contentEditable guard, NFC on all typed inputs.
+- i18n: `study.undo`/`study.undone` added en/ru/lt (parity kept).
+- App shell: `100dvh` override. Full log: `docs/BUGS_FIXED.md`.
+- CARRY: Dexie/IndexedDB migration (interface ready, still
+  localStorage), modal focus trap + safe-area + font audit (T9),
+  AI race/abort fixes (T3), Listening mode voices (T7).

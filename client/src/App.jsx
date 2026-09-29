@@ -29,7 +29,10 @@ function Shell() {
   );
 
   return (
-    <div className="min-h-screen bg-canvas font-sans text-primary">
+    <div
+      className="min-h-screen bg-canvas font-sans text-primary"
+      style={{ minHeight: '100dvh' }}
+    >
       <Routes>
         <Route path="/login" element={<Login notify={notify} />} />
         <Route path="/register" element={<Register notify={notify} />} />
