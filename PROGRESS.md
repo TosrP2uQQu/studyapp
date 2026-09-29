@@ -397,3 +397,30 @@ existing equivalent instead and marked the step accordingly:
 - CARRY: WebLLM, tutor side-sheet in study, video→cards
   transcript uses Smart Import manually, quadratic/triangle/
   circle explainers, KaTeX proper render.
+
+## T6. Habit system (done, constraint 6 obeyed)
+- `lib/habit.js`: XP (all ratings earn 10, quick +2, overdue +5,
+  cram flat 5, daily cap 200, gentle 10-level curve), goal streak
+  (freezes: 1 per 7-day run, max 3, auto-apply single gaps; rest
+  day never breaks; welcome-back flag, never shame), mastery
+  buckets (new/learning/young/mature ≥21d), deck stages
+  (seed→grove), exam maths (required/day + ahead/on-track/
+  behind), intention → .ics (daily RRULE), sleep tips,
+  12 achievements (no grinding rewards). 13 tests, 90/90 green.
+- Today (`/today`, first nav item): plan card (due + est. time +
+  weak-spot deck + micro-lesson link), resume list (session
+  cursors), goal ring + editable target, Done-for-today (stats,
+  XP, sleep tip, forecast, extra-cram link), welcome-back
+  restart, XP/level/cap + streak/freezes/longest, exam planner
+  (per-deck date → required/day + status), intention + .ics,
+  Pomodoro (configurable, chime off by default) + stretch tips +
+  WebAudio noise (off default), weekly canvas image (name,
+  streak, reviews, scheduled — nothing else), achievements grid.
+- StudySession: XP awards on every rating; break nudge
+  (default 45 min, toast, off-switch). Dashboard: late-night
+  banner (23:30+, dismissible, off-switch). Sidebar: hide-streak
+  respected. Settings → Wellbeing: all off-switches.
+- i18n: +69 keys en/ru/lt. Parity held.
+- CARRY: per-deck mastery rings (need per-card intervals),
+  precise tomorrow forecast, push reminders (no infra),
+  achievement toasts, rest-day setting UI.

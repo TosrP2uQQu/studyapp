@@ -3,12 +3,14 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { dayWord } from '../lib/i18n';
 import AiStatusChip from './AiStatusChip';
+import { getAdapter } from '../lib/storage';
 
 export default function Sidebar() {
   const { user, logout, streak, refreshStreak, t, lang } = useAuth();
   const navigate = useNavigate();
 
   const links = [
+    { to: '/today', label: t('nav.today') },
     { to: '/', label: t('nav.dashboard'), end: true },
     { to: '/mixed', label: t('nav.mixed') },
     { to: '/tutor', label: t('nav.tutor') },
@@ -20,6 +22,15 @@ export default function Sidebar() {
   useEffect(() => {
     refreshStreak();
   }, [refreshStreak]);
+
+  const hideStreak = (() => {
+    try {
+      const wb = getAdapter().get('wellbeing') || {};
+      return wb.hideStreak === true;
+    } catch {
+      return false;
+    }
+  })();
 
   return (
     <aside className="flex h-screen w-60 shrink-0 flex-col border-r border-line bg-surface">
@@ -49,6 +60,7 @@ export default function Sidebar() {
       </nav>
       <div className="border-t border-line px-5 py-4">
         <AiStatusChip />
+        {!hideStreak && (
         <p className="mt-2 text-sm text-muted">
           {streak === null ? (
             t('nav.streakLoading')
@@ -58,6 +70,7 @@ export default function Sidebar() {
             `${t('nav.streakWord')}: ${streak} ${dayWord(lang, streak)}`
           )}
         </p>
+        )}
         {user && (
           <div className="mt-3 flex items-center justify-between">
             <span className="truncate text-sm font-medium text-primary">{user.username}</span>

@@ -167,3 +167,31 @@ export function clearCursor(deckId) {
     /* ignore */
   }
 }
+
+// All resume cursors (deckId -> index), for the Today page.
+export function listCursors() {
+  const out = [];
+  for (const [k, v] of cursorMemory.entries()) {
+    if (v > 0) out.push({ deckId: k, index: v });
+  }
+  const store = sessionStore();
+  if (!store) return out;
+  try {
+    const prefix = key('cursor.');
+    for (let i = 0; i < store.length; i++) {
+      const k = store.key(i);
+      if (k && k.startsWith(prefix)) {
+        const deckId = k.slice(prefix.length);
+        const n = parseInt(store.getItem(k), 10);
+        if (Number.isFinite(n) && n > 0) {
+          if (!out.some((e) => e.deckId === deckId)) {
+            out.push({ deckId, index: n });
+          }
+        }
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return out;
+}

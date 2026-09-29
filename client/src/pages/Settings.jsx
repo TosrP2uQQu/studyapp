@@ -10,6 +10,15 @@ import Spinner from '../components/Spinner';
 import { OLLAMA_SUGGESTION, testOllama } from '../lib/aiClient';
 import AiDiagnostics from '../components/AiDiagnostics';
 import { getBrowserKey, setBrowserKey } from '../lib/keys';
+import { getAdapter } from '../lib/storage';
+
+function loadWellbeing() {
+  try {
+    return getAdapter().get('wellbeing') || {};
+  } catch {
+    return {};
+  }
+}
 import { cardWord } from '../lib/i18n';
 
 const inputCls =
@@ -67,6 +76,19 @@ export default function Settings({ notify }) {
   const [newPw2, setNewPw2] = useState('');
   const [delPw, setDelPw] = useState('');
   const [rememberKey, setRememberKey] = useState(false);
+  const [wb, setWb] = useState(loadWellbeing);
+
+  const setWellbeing = (patch) => {
+    setWb((prev) => {
+      const next = { ...prev, ...patch };
+      try {
+        getAdapter().set('wellbeing', next);
+      } catch {
+        /* best effort */
+      }
+      return next;
+    });
+  };
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   const [saving, setSaving] = useState(false);
@@ -745,6 +767,80 @@ export default function Settings({ notify }) {
             </Row>
           </>
         )}
+      </Section>
+
+      <Section title={t('set.wellbeing')}>
+        <Row>
+          <Toggle
+            id="wb-break"
+            label={t('well.breakNudge')}
+            hint={t('well.breakHint')}
+            checked={wb.breakNudge !== false}
+            onChange={(v) => setWellbeing({ breakNudge: v })}
+          />
+        </Row>
+        <Row>
+          <div className="py-3">
+            <label htmlFor="wb-break-min" className="mb-1 block text-sm font-medium">
+              {t('well.breakAfter')}
+            </label>
+            <input
+              id="wb-break-min"
+              type="number"
+              min={15}
+              max={180}
+              step={5}
+              value={wb.breakAfterMin == null ? 45 : wb.breakAfterMin}
+              onChange={(e) => setWellbeing({ breakAfterMin: Number(e.target.value) })}
+              className={inputCls}
+            />
+          </div>
+        </Row>
+        <Row>
+          <Toggle
+            id="wb-late"
+            label={t('well.lateNudge')}
+            hint={t('well.lateHint')}
+            checked={wb.lateNudge !== false}
+            onChange={(v) => setWellbeing({ lateNudge: v })}
+          />
+        </Row>
+        <Row>
+          <Toggle
+            id="wb-celeb"
+            label={t('well.celebrations')}
+            hint={t('well.celebrationsHint')}
+            checked={wb.celebrations !== false}
+            onChange={(v) => setWellbeing({ celebrations: v })}
+          />
+        </Row>
+        <Row>
+          <Toggle
+            id="wb-sounds"
+            label={t('well.sounds')}
+            hint={t('well.soundsHint')}
+            checked={wb.sounds === true}
+            onChange={(v) => setWellbeing({ sounds: v })}
+          />
+        </Row>
+        <Row>
+          <Toggle
+            id="wb-remind"
+            label={t('well.reminders')}
+            hint={t('well.remindersHint')}
+            checked={wb.reminders === true}
+            onChange={(v) => setWellbeing({ reminders: v })}
+          />
+        </Row>
+        <Row>
+          <Toggle
+            id="wb-streak"
+            label={t('well.hideStreak')}
+            hint={t('well.hideStreakHint')}
+            checked={wb.hideStreak === true}
+            onChange={(v) => setWellbeing({ hideStreak: v })}
+          />
+        </Row>
       </Section>
 
       <Section title={t('set.account')}>

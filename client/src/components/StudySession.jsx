@@ -23,6 +23,8 @@ import {
 import { toNFC } from '../lib/text';
 import HistoryStrip from './HistoryStrip';
 import { getAdapter } from '../lib/storage';
+import { awardReviewXp } from '../lib/habit';
+import { studyDayString } from '../lib/day';
 
 // Tier colors reuse the rating palette's meaning: correct reads like Easy,
 // almost like OK, incorrect like Hard.
@@ -141,6 +143,24 @@ export default function StudySession({
     }
   }, [elapsed, budgetMinutes, budgetPrompted, index, cards.length]);
 
+  // Break nudge (Settings → Wellbeing, default after 45 min):
+  // separate from the session time budget above, dismissible.
+  const [breakShown, setBreakShown] = useState(false);
+  useEffect(() => {
+    let wb = null;
+    try {
+      wb = getAdapter().get('wellbeing') || {};
+    } catch {
+      wb = {};
+    }
+    if (wb.breakNudge === false || breakShown) return;
+    const afterMin = wb.breakAfterMin == null ? 45 : wb.breakAfterMin;
+    if (elapsed >= afterMin * 60 && index < cards.length) {
+      setBreakShown(true);
+      notify(t('well.breakHint'), 'success');
+    }
+  }, [elapsed, index, cards.length, breakShown, notify, t]);
+
   const resetForNext = useCallback(() => {
     setFlipped(false);
     setTyped('');
@@ -233,6 +253,13 @@ export default function StudySession({
     async (value) => {
       if (!card || rating) return;
       const ms = Date.now() - shownAtRef.current;
+      const who = (sessionUser && sessionUser.username) || 'guest';
+      const overdue = Boolean(
+        card.progress &&
+        card.progress.nextReviewDate &&
+        String(card.progress.nextReviewDate).slice(0, 10) <
+          studyDayString(Date.now())
+      );
       // Cram re-drill: practice only, never touches scheduling.
       if (cram) {
         try {
@@ -245,6 +272,11 @@ export default function StudySession({
           });
         } catch {
           /* mirror best-effort */
+        }
+        try {
+          awardReviewXp(who, { rating: value, ms, cram: true });
+        } catch {
+          /* xp best-effort */
         }
         setSessionLog((s) => [...s, { card, rating: value, ms }]);
         resetForNext();
@@ -286,6 +318,11 @@ export default function StudySession({
           },
         ]);
         setSessionLog((s) => [...s, { card, rating: value, ms }]);
+        try {
+          awardReviewXp(who, { rating: value, ms, overdue });
+        } catch {
+          /* xp best-effort */
+        }
         resetForNext();
         setIndex((i) => i + 1);
       } catch (err) {
