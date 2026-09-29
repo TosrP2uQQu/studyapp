@@ -424,3 +424,21 @@ existing equivalent instead and marked the step accordingly:
 - CARRY: per-deck mastery rings (need per-card intervals),
   precise tomorrow forecast, push reminders (no infra),
   achievement toasts, rest-day setting UI.
+
+## T7. Study modes + smart sessions (done)
+- MC mode (Study toggle): same-deck distractors, deduped, never
+  invented; pick reveals + pre-suggests OK/Hard with ring
+  highlight, always overridable. Reverse toggle (forward/back/
+  both; `__rev` ids stripped for the API). Blitz 60 s (countdown,
+  cram branch, no scheduling). Listening button (async voices,
+  deck-language match, honest no-voice note). Match game page
+  (6 pairs, timer, practice-only). 97/97 client green.
+- Sessions: new-card cap + interleaving (existing) kept; suspend/
+  bury/notes/flags carried (need server fields). E edits in
+  session (cursor resumes). Keys: Space 1/2/3, Z + Ctrl+Z undo,
+  E edit, T tutor, V tutor-videos (?tab=), ? sheet, Ctrl+K
+  palette (accent-insensitive decks + actions, arrows/enter/esc).
+- i18n: +31 keys en/ru/lt. E reassigned Easy→Edit per spec;
+  Settings shortcut list updated.
+- CARRY: cloze, speaking grading, learn path, mock exam builder,
+  AI distractors, backlog catch-up spread, suspend/bury.

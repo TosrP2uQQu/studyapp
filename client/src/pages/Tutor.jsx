@@ -98,7 +98,7 @@ export default function Tutor({ notify }) {
   const [depth, setDepth] = useState('standard');
   const [sending, setSending] = useState(false);
   const [streamBuf, setStreamBuf] = useState('');
-  const [tab, setTab] = useState('chat');
+  const [tab, setTab] = useState(params.get('tab') || 'chat');
   const [ytKey, setYtKey] = useState(() => getBrowserKey('youtube'));
   const [ytResults, setYtResults] = useState(null);
   const [ytBusy, setYtBusy] = useState(false);

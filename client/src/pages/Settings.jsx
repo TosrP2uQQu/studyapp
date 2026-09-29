@@ -31,7 +31,13 @@ const SHORTCUTS = [
   ['Space or Enter', 'set.scFlip'],
   ['1 or H', 'set.scHard'],
   ['2 or O', 'set.scOk'],
-  ['3 or E', 'set.scEasy'],
+  ['3', 'set.scEasy'],
+  ['Z or Ctrl+Z', 'set.scUndo'],
+  ['E', 'set.scEdit'],
+  ['T', 'set.scTutor'],
+  ['V', 'set.scVideo'],
+  ['?', 'set.scSheet'],
+  ['Ctrl+K', 'set.scPalette'],
 ];
 
 const CLOUD = ['anthropic', 'openai', 'gemini', 'mistral', 'groq'];

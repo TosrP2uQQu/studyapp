@@ -25,6 +25,8 @@ import HistoryStrip from './HistoryStrip';
 import { getAdapter } from '../lib/storage';
 import { awardReviewXp } from '../lib/habit';
 import { studyDayString } from '../lib/day';
+import MultipleChoice from './MultipleChoice';
+import { pickVoice, speechSupported } from '../lib/modes';
 
 // Tier colors reuse the rating palette's meaning: correct reads like Easy,
 // almost like OK, incorrect like Hard.
@@ -53,6 +55,9 @@ function TierBadge({ tier }) {
 // cursorKey: sessionStorage key for the resume cursor (deck id or 'mixed').
 // mode: label written into the review log ('flip', 'mixed', ...).
 // deckReviews: server rating history for this deck (history strip).
+// mc: { enabled, pool } for multiple-choice distractors.
+// blitz: 60-second cram round (never schedules).
+// speakLang: BCP-47 hint for the Listening voice.
 export default function StudySession({
   cards: initialCards,
   reviewEndpoint,
@@ -68,10 +73,19 @@ export default function StudySession({
   cursorKey,
   mode,
   deckReviews,
+  mc,
+  blitz,
+  speakLang,
   notify,
 }) {
   const [cards, setCards] = useState(initialCards);
   const [cram, setCram] = useState(false);
+  const noSchedule = cram || blitz;
+  // Multiple choice replaces the typed step when enabled.
+  const [suggested, setSuggested] = useState(null);
+  const [showShortcuts, setShowShortcuts] = useState(false);
+  const [blitzLeft, setBlitzLeft] = useState(60);
+  const [voices, setVoices] = useState([]);
   // Full session record for the summary grid (never removed by undo).
   const [sessionLog, setSessionLog] = useState([]);
   const startIndex = () => {
@@ -120,6 +134,10 @@ export default function StudySession({
   const writtenFallback = Boolean(written && !aiReady);
   const endTiming = (ai?.gradingTiming || 'immediate') === 'end';
   const needType = modes?.typedRecall && !writtenActive && !flipped;
+  // Multiple choice replaces the typed step when enabled with options.
+  const mcOn = Boolean(
+    mc && mc.enabled && (mc.pool || []).length >= 2 && !writtenActive
+  );
 
   useEffect(() => {
     const t = setInterval(() => setElapsed(Math.floor((Date.now() - startRef.current) / 1000)), 10 * 1000);
@@ -136,6 +154,42 @@ export default function StudySession({
   useEffect(() => {
     if (cursorKey && index >= cards.length) clearCursor(cursorKey);
   }, [index, cards.length, cursorKey]);
+
+  // Blitz countdown: 60 seconds, then the round ends.
+  useEffect(() => {
+    if (!blitz || index >= cards.length) return;
+    if (blitzLeft <= 0) {
+      setIndex(cards.length);
+      return;
+    }
+    const id = setTimeout(() => setBlitzLeft((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [blitz, blitzLeft, index, cards.length]);
+
+  // Listening voices arrive asynchronously in every browser.
+  useEffect(() => {
+    if (!speechSupported()) return;
+    const load = () => {
+      try {
+        setVoices(window.speechSynthesis.getVoices() || []);
+      } catch {
+        /* no voices */
+      }
+    };
+    load();
+    try {
+      window.speechSynthesis.onvoiceschanged = load;
+    } catch {
+      /* older browsers */
+    }
+    return () => {
+      try {
+        window.speechSynthesis.onvoiceschanged = null;
+      } catch {
+        /* ignore */
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (budgetMinutes && elapsed >= budgetMinutes * 60 && !budgetPrompted && index < cards.length) {
@@ -171,6 +225,7 @@ export default function StudySession({
     setFeedback('');
     setWrittenText('');
     setGrade(null);
+    setSuggested(null);
   }, []);
 
   // Grade one written answer. Returns { tier, explanation, aiGraded }.
@@ -260,8 +315,8 @@ export default function StudySession({
         String(card.progress.nextReviewDate).slice(0, 10) <
           studyDayString(Date.now())
       );
-      // Cram re-drill: practice only, never touches scheduling.
-      if (cram) {
+      // Cram re-drill (and Blitz): practice only, never schedules.
+      if (noSchedule) {
         try {
           logReview({
             cardId: card.id,
@@ -331,7 +386,7 @@ export default function StudySession({
         setRating(false);
       }
     },
-    [card, rating, reviewEndpoint, resetForNext, notify, mode, gradeDeckId, index, cram, t]
+    [card, rating, reviewEndpoint, resetForNext, notify, mode, gradeDeckId, index, noSchedule, t]
   );
 
   // Undo the last rating: server restores the SM-2 snapshot, the local
@@ -339,8 +394,8 @@ export default function StudySession({
   const undoLast = useCallback(async () => {
     const top = undoStack[undoStack.length - 1];
     if (!top || rating || undoing) return;
-    // Cram undo is local-only (nothing was scheduled).
-    if (cram) {
+    // Cram/Blitz undo is local-only (nothing was scheduled).
+    if (noSchedule) {
       try {
         popUndo();
       } catch {
@@ -373,10 +428,10 @@ export default function StudySession({
     } finally {
       setUndoing(false);
     }
-  }, [undoStack, rating, undoing, reviewEndpoint, resetForNext, notify, cram, t]);
+  }, [undoStack, rating, undoing, reviewEndpoint, resetForNext, notify, noSchedule, t]);
 
   // "Ask tutor" handoff: stash card context, Tutor picks it up.
-  const askTutor = useCallback((list) => {
+  const askTutor = useCallback((list, tab) => {
     try {
       getAdapter().set('tutor.context', {
         cards: (list || [card]).filter(Boolean).map((c) => ({
@@ -390,8 +445,31 @@ export default function StudySession({
       /* Tutor still opens, without context */
     }
     const did = gradeDeckId || (card && card.deckId);
-    navigate(did ? `/tutor?deck=${did}&card=${card.id}` : '/tutor');
+    const base = did ? `/tutor?deck=${did}&card=${card.id}` : '/tutor';
+    navigate(tab ? `${base}${did ? '&' : '?'}tab=${tab}` : base);
   }, [card, gradeDeckId, navigate]);
+
+  // Edit the current card in the deck editor (E). The resume cursor
+  // survives, so the session picks up where it stopped.
+  const editSession = useCallback(() => {
+    const did = gradeDeckId || (card && card.deckId);
+    if (did) navigate(`/decks/${did}/edit`);
+  }, [card, gradeDeckId, navigate]);
+
+  // Listening: read the front aloud in a matching voice, if any.
+  const speak = useCallback(() => {
+    if (!speechSupported() || !card) return;
+    try {
+      window.speechSynthesis.cancel();
+      const u = new window.SpeechSynthesisUtterance(card.front);
+      const voice = pickVoice(voices, speakLang || 'en');
+      if (voice) u.voice = voice;
+      u.rate = 0.9;
+      window.speechSynthesis.speak(u);
+    } catch {
+      notify(t('study.noVoice'), 'error');
+    }
+  }, [card, voices, speakLang, notify, t]);
 
   // Re-drill the Hard ones: cram over the hard-rated cards only.
   // Scheduling untouched (rate() takes the cram branch above).
@@ -418,28 +496,40 @@ export default function StudySession({
       // IME composition (e.g. Lithuanian accents via dead keys): never
       // rate or flip mid-composition.
       if (e.isComposing || e.keyCode === 229) return;
+      if (e.key === 'Escape' && showShortcuts) {
+        setShowShortcuts(false);
+        return;
+      }
       // Ctrl/Cmd+Z undoes the last rating from anywhere in the session.
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
         e.preventDefault();
         undoLast();
         return;
       }
+      // Ctrl/Cmd+K opens the command palette (handled in App shell).
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') return;
       const tag = (e.target.tagName || '').toUpperCase();
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       if (e.target && e.target.isContentEditable) return;
       if (e.code === 'Space' || e.key === 'Enter') {
         e.preventDefault();
         flip();
+      } else if (e.key === '?') {
+        setShowShortcuts(true);
       } else if (flipped) {
         const k = e.key.toLowerCase();
         if (k === '1' || k === 'h') rate('hard');
         else if (k === '2' || k === 'o') rate('ok');
-        else if (k === '3' || k === 'e') rate('easy');
+        else if (k === '3') rate('easy');
+        else if (k === 'z') undoLast();
+        else if (k === 'e') editSession();
+        else if (k === 't') askTutor();
+        else if (k === 'v') askTutor(null, 'videos');
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [flip, flipped, rate, undoLast]);
+  }, [flip, flipped, rate, undoLast, editSession, askTutor, showShortcuts]);
 
   const requestFeedback = async () => {
     if (!explain.trim()) {
@@ -678,6 +768,7 @@ export default function StudySession({
           {t('study.cardOf', { i: index + 1, n: cards.length })}
           {cardMeta ? `, ${cardMeta(card)}` : ''}
           {cram ? ` · ${t('session.cramNote')}` : ''}
+          {blitz ? ` · ${t('study.blitzLeft', { s: blitzLeft })}` : ''}
         </span>
         <span className="flex items-center gap-4">
           {undoStack.length > 0 && (
@@ -789,7 +880,28 @@ export default function StudySession({
               </div>
             )}
             <FlashCard front={card.front} back={card.back} flipped={flipped} flipStyle={flipStyle} onFlip={() => setFlipped((f) => !f)} />
-            {needType && (
+            {speechSupported() && !needGuess && (
+              <button
+                onClick={speak}
+                className="mt-3 min-h-[44px] rounded-lg border border-line px-4 py-2 text-sm font-semibold hover:bg-surface"
+              >
+                {t('study.listen')}
+              </button>
+            )}
+            {mcOn && !flipped && (
+              <div className="mt-4 rounded-2xl bg-surface p-6 shadow-md">
+                <p className="text-sm text-muted">{t('study.mcHint')}</p>
+                <MultipleChoice
+                  card={card}
+                  pool={mc.pool}
+                  onAnswer={(correct, sug) => {
+                    setFlipped(true);
+                    setSuggested(sug);
+                  }}
+                />
+              </div>
+            )}
+            {needType && !mcOn && (
               <div className="mt-4 rounded-2xl bg-surface p-6 shadow-md">
                 <label htmlFor="study-typed" className="mb-1 block text-sm font-medium">
                   {t('study.typedLabel')}
@@ -818,13 +930,18 @@ export default function StudySession({
             )}
             {flipped && (
               <>
+                {suggested && (
+                  <p className="mt-4 text-sm text-muted" role="status">
+                    {t('study.suggest', { r: t('rate.' + suggested) })}
+                  </p>
+                )}
                 {modes?.typedRecall && typed.trim() && (
                   <div className="mt-4 rounded-xl border border-line bg-surface p-4 text-sm">
                     <p className="font-medium">{t('study.youTyped')} {typed.trim()}</p>
                     <p className="mt-1 text-muted">{t('study.answerIs')} {card.back}</p>
                   </div>
                 )}
-                <RatingButtons onRate={rate} disabled={rating} />
+                <RatingButtons onRate={rate} disabled={rating} suggested={suggested} />
                 <HistoryStrip
                   cardId={card.id}
                   serverRows={deckReviews}
@@ -891,6 +1008,31 @@ export default function StudySession({
           </>
         )}
       </div>
+
+      {showShortcuts && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-surface p-8 shadow-lg">
+            <h2 className="font-serif text-2xl font-semibold">{t('study.shortcuts')}</h2>
+            <ul className="mt-4 space-y-2 text-base">
+              <li><b>Space</b> — {t('set.scFlip')}</li>
+              <li><b>1 / H</b> — {t('set.scHard')}</li>
+              <li><b>2 / O</b> — {t('set.scOk')}</li>
+              <li><b>3</b> — {t('set.scEasy')}</li>
+              <li><b>Z / Ctrl+Z</b> — {t('set.scUndo')}</li>
+              <li><b>E</b> — {t('set.scEdit')}</li>
+              <li><b>T</b> — {t('set.scTutor')}</li>
+              <li><b>V</b> — {t('set.scVideo')}</li>
+              <li><b>?</b> — {t('study.shortcuts')}</li>
+            </ul>
+            <button
+              onClick={() => setShowShortcuts(false)}
+              className="mt-5 w-full rounded-lg bg-ink px-4 py-2.5 font-semibold text-white hover:opacity-90"
+            >
+              {t('study.close')}
+            </button>
+          </div>
+        </div>
+      )}
 
       {budgetPrompted && !stopping && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">

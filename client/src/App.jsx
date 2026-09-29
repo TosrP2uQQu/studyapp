@@ -1,9 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Toast from './components/Toast';
+import CommandPalette from './components/CommandPalette';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Onboarding from './pages/Onboarding';
@@ -11,6 +12,7 @@ import Tutorial from './pages/Tutorial';
 import Profile from './pages/Profile';
 import Tutor from './pages/Tutor';
 import Today from './pages/Today';
+import Match from './pages/Match';
 import Dashboard from './pages/Dashboard';
 import DeckEditor from './pages/DeckEditor';
 import Study from './pages/Study';
@@ -22,8 +24,24 @@ import Settings from './pages/Settings';
 
 function Shell() {
   const [toast, setToast] = useState(null);
+  const [palOpen, setPalOpen] = useState(false);
   const notify = useCallback((message, type = 'success') => {
     setToast({ message, type, key: Date.now() });
+  }, []);
+
+  // Global command palette: Ctrl/Cmd+K, never while typing.
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        const tag = (e.target.tagName || '').toUpperCase();
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+        if (e.target && e.target.isContentEditable) return;
+        e.preventDefault();
+        setPalOpen((v) => !v);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   const wrap = (el, narrow) => (
@@ -63,6 +81,7 @@ function Shell() {
         <Route path="/decks/new" element={wrap(<DeckEditor notify={notify} />, true)} />
         <Route path="/decks/:id/edit" element={wrap(<DeckEditor notify={notify} />)} />
         <Route path="/decks/:id/study" element={wrap(<Study notify={notify} />, true)} />
+        <Route path="/decks/:id/match" element={wrap(<Match notify={notify} />, true)} />
         <Route path="/mixed" element={wrap(<MixedReview notify={notify} />, true)} />
         <Route path="/decks/:id/quiz" element={wrap(<Quiz notify={notify} />, true)} />
         <Route path="/decks/:id/recall" element={wrap(<RecallSheet notify={notify} />, true)} />
@@ -71,6 +90,7 @@ function Shell() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <Toast key={toast?.key} toast={toast} onClose={() => setToast(null)} />
+      <CommandPalette open={palOpen} onClose={() => setPalOpen(false)} />
     </div>
   );
 }
