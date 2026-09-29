@@ -1,0 +1,126 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Phase 2 design tokens. Light values are a warm paper gray with a deep
+   slate-blue ink; dark values stay in the same family, never near-black
+   with a neon accent. */
+:root {
+  --bg: #f5f6f3;
+  --surface: #ffffff;
+  --text: #1c2321;
+  --muted: #5b6560;
+  --border: #e1e4df;
+  --ink: #24425f;
+  --mastery: #3f6b4f;
+  --hard: #9c4a3c;
+  --ok: #a88b3f;
+}
+
+.dark {
+  --bg: #14181a;
+  --surface: #1d2224;
+  --text: #edefec;
+  --muted: #9aa39d;
+  --border: #2a3033;
+  --ink: #5c87ad;
+  --mastery: #7fae8d;
+  --hard: #d08476;
+  --ok: #d3b876;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui, 'IBM Plex Sans', system-ui, sans-serif);
+}
+
+/* Serif is reserved for headings and flashcard content; everything
+   functional stays in the UI font. Both are switchable in Settings. */
+h1,
+h2,
+.font-display {
+  font-family: var(--font-head, 'Source Serif 4', Georgia, serif);
+}
+
+/* Density: layout zoom on the main content column only (sidebar stays
+   put). Compact 0.9, comfortable 1, spacious 1.12. */
+html[data-density='compact'] main {
+  zoom: 0.9;
+}
+html[data-density='spacious'] main {
+  zoom: 1.12;
+}
+
+/* Reduce motion: kill transitions and animations app-wide, including the
+   flashcard flip, when requested explicitly or via the OS setting. */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* 3D flip helpers for FlashCard — the one deliberate animation. */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Plain rows with hairline dividers for non-card content. */
+.row-divider {
+  border-bottom: 1px solid var(--border);
+}
+.row-divider:last-child {
+  border-bottom: none;
+}
+
+/* Visible keyboard focus on every interactive element. Nothing in this
+   app removes outlines, and this guarantees a consistent indicator even
+   where a component only changes border color on focus. The doubled
+   pseudo-class outranks Tailwind's focus:outline-none (which some inputs
+   use alongside their border-color change), so the ring actually shows. */
+button:focus-visible:focus,
+a:focus-visible:focus,
+input:focus-visible:focus,
+select:focus-visible:focus,
+textarea:focus-visible:focus {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* Contrast: the ink/clay/leaf tokens lighten in dark mode, where white
+   text on them falls below WCAG AA. Same hues, near-black text instead. */
+.dark .bg-ink.text-white,
+.dark .bg-clay.text-white,
+.dark .bg-leaf.text-white {
+  color: #14181a;
+}
+
+/* Printable cheat sheet: cards only, no chrome. */
+@media print {
+  aside,
+  nav,
+  button,
+  form,
+  input,
+  textarea,
+  select {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  .shadow-md {
+    box-shadow: none !important;
+  }
+}

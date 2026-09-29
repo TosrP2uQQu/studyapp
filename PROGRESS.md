@@ -442,3 +442,23 @@ existing equivalent instead and marked the step accordingly:
   Settings shortcut list updated.
 - CARRY: cloze, speaking grading, learn path, mock exam builder,
   AI distractors, backlog catch-up spread, suspend/bury.
+
+## T8. Open-web content (done, constraint 7 obeyed)
+- Explore (`/explore`, sidebar): 8 bundled decks as static repo
+  JSON (125 cards, 15–20 each): LT A1, 7 cases, Lietuva basics,
+  algebra/geometry, physics units, elements 1–20, irregular
+  verbs, study science. One-click add (deck + cards), attribution
+  in every description + `docs/CREDITS.md`. Only certain facts;
+  one risky claim reworded out. 106/106 client green.
+- Imports: delimiter auto-detect (tab/semicolon/comma/plain) +
+  blank-line blocks + header CSV wired into DeckEditor notes
+  path; exports JSON/TSV/CSV; print cheat sheet (print CSS).
+- Wikipedia Learn more (Explore + Tutor explore tab):
+  user-initiated MediaWiki `origin=*` extracts in UI language,
+  title + link + CC BY-SA note.
+- i18n: +15 keys en/ru/lt.
+- NOTE: vite chunk-size warning appeared (main ~500 KB);
+  route splitting lands in T9.
+- CARRY: Tatoeba/OpenStax decks (need two-source verification
+  pass), Quizlet login-based import (out of scope), Anki .apkg
+  binary import.

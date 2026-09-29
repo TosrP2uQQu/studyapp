@@ -22,6 +22,7 @@ import {
   youtubeSearchUrl,
 } from '../lib/videos';
 import { sanitizeSvg, svgDataUrl } from '../lib/svg';
+import { fetchSummary } from '../lib/wiki';
 import { suggestExplainer } from '../explainers/registry';
 import Pythagoras from '../explainers/Pythagoras';
 import LineExplainer from '../explainers/Line';
@@ -111,6 +112,8 @@ export default function Tutor({ notify }) {
     }
   });
   const [playing, setPlaying] = useState(null);
+  const [wiki, setWiki] = useState(null);
+  const [wikiBusy, setWikiBusy] = useState(false);
   const ctrlRef = useRef(null);
   const bottomRef = useRef(null);
   // Handoff from Study ("Ask tutor", "hardest 3"): cards stashed
@@ -364,6 +367,20 @@ export default function Tutor({ notify }) {
   const queries = videoQueries(card || { front: deckName }, lang);
   const explainerId = suggestExplainer(card);
   const Explainer = explainerId ? EXPLAINER_VIEWS[explainerId] : null;
+
+  const learnMore = async () => {
+    const topic = card ? card.front : deckName;
+    if (!topic || wikiBusy) return;
+    setWikiBusy(true);
+    setWiki(null);
+    try {
+      setWiki(await fetchSummary(topic, lang));
+    } catch {
+      setWiki({ missing: true });
+    } finally {
+      setWikiBusy(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -658,19 +675,55 @@ export default function Tutor({ notify }) {
       )}
 
       {tab === 'explore' && (
-        <div className="mt-4 rounded-2xl bg-surface p-5 shadow-md">
-          {Explainer ? (
-            <>
-              <h2 className="font-serif text-xl font-semibold">
-                {t('tutor.exploreTitle')}
-              </h2>
-              <div className="mt-3">
-                <Explainer />
+        <div className="mt-4 space-y-4">
+          <div className="rounded-2xl bg-surface p-5 shadow-md">
+            {Explainer ? (
+              <>
+                <h2 className="font-serif text-xl font-semibold">
+                  {t('tutor.exploreTitle')}
+                </h2>
+                <div className="mt-3">
+                  <Explainer />
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-muted">{t('tutor.noExplainer')}</p>
+            )}
+          </div>
+          <div className="rounded-2xl bg-surface p-5 shadow-md">
+            <h2 className="font-serif text-xl font-semibold">
+              {t('explore.wiki')}
+            </h2>
+            <button
+              onClick={learnMore}
+              disabled={wikiBusy}
+              className="mt-2 min-h-[44px] rounded-lg border border-line px-4 py-2 text-sm font-semibold hover:bg-canvas disabled:opacity-50"
+            >
+              {t('explore.wikiGo')}
+            </button>
+            {wiki && !wiki.missing && (
+              <div className="mt-3 rounded-xl border border-line p-4">
+                <p className="font-semibold">{wiki.title}</p>
+                <p className="mt-1 text-sm text-muted">{wiki.extract}</p>
+                <p className="mt-2 text-sm">
+                  <a
+                    href={wiki.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-ink hover:underline"
+                  >
+                    {t('explore.wikiOpen')}
+                  </a>{' '}
+                  <span className="text-muted">· {wiki.license}</span>
+                </p>
               </div>
-            </>
-          ) : (
-            <p className="text-sm text-muted">{t('tutor.noExplainer')}</p>
-          )}
+            )}
+            {wiki && wiki.missing && (
+              <p className="mt-2 text-sm text-muted">
+                {t('explore.wikiMissing')}
+              </p>
+            )}
+          </div>
         </div>
       )}
     </div>

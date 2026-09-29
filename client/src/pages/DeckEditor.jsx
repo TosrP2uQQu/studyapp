@@ -15,6 +15,14 @@ import {
 import { generate } from '../lib/llm';
 import { getBrowserKey } from '../lib/keys';
 import { normCardSide } from '../lib/text';
+import {
+  download,
+  parseCsv,
+  parseDelimited,
+  toCsv,
+  toJson,
+  toTsv,
+} from '../lib/importers';
 
 export const LANGS = [
   { code: 'en', name: 'English' },
@@ -189,7 +197,14 @@ export default function DeckEditor({ notify }) {
       setImportSummary(summarizeResult(sorted));
       return;
     }
-    const parsed = parsePaste(paste);
+    // Notes mode: auto-detect delimiter (tab/comma/semicolon)
+    // and card separators (blank lines vs lines), CSV-aware.
+    let parsed = [];
+    if (/^\s*front\s*,/im.test(paste) || /^\s*"front"\s*,/im.test(paste)) {
+      parsed = parseCsv(paste).cards;
+    } else {
+      parsed = parseDelimited(paste).cards;
+    }
     if (parsed.length === 0) {
       notify(t('editor.nothingToParse'), 'error');
       return;
@@ -576,6 +591,30 @@ export default function DeckEditor({ notify }) {
             <h2 className="font-serif text-2xl font-semibold">{t('editor.cards')} ({deck?.cards?.length || 0})</h2>
             <button onClick={exportCsv} className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold hover:bg-canvas">
               {t('editor.exportCsv')}
+            </button>
+            <button
+              onClick={() => {
+                const safe = (deck?.name || 'deck').replace(/[^a-z0-9-_]+/gi, '-').slice(0, 40);
+                download(`${safe}.json`, toJson(deck?.cards || [], deck?.name), 'application/json');
+              }}
+              className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold hover:bg-canvas"
+            >
+              {t('editor.exportJson')}
+            </button>
+            <button
+              onClick={() => {
+                const safe = (deck?.name || 'deck').replace(/[^a-z0-9-_]+/gi, '-').slice(0, 40);
+                download(`${safe}.tsv`, toTsv(deck?.cards || []), 'text/tab-separated-values');
+              }}
+              className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold hover:bg-canvas"
+            >
+              {t('editor.exportTsv')}
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold hover:bg-canvas"
+            >
+              {t('editor.print')}
             </button>
             <Link to={`/decks/${id}/quiz`} className="rounded-lg bg-ink px-4 py-2 text-sm font-semibold text-white hover:opacity-90">
               {t('editor.quizMe')}
