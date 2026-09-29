@@ -6,7 +6,7 @@
 import { chatOllama, ollamaRoot } from './aiClient.js';
 import { getAdapter } from './storage.js';
 
-export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+export const DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash';
 export const TIMEOUT_MS = 25000;
 export const MIN_SPACING_MS = 800;
 export const MAX_RETRIES = 2;

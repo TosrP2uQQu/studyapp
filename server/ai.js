@@ -55,7 +55,7 @@ function decryptKey(stored) {
 const DEFAULT_MODELS = {
   anthropic: 'claude-3-5-sonnet-20241022',
   openai: 'gpt-4o-mini',
-  gemini: 'gemini-2.0-flash',
+  gemini: 'gemini-3.8-flash',
   mistral: 'mistral-small-latest',
   groq: 'llama-3.1-8b-instant',
   // ollama and custom have no server-side default: ollama is client-side,

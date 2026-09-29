@@ -51,7 +51,7 @@ function geminiText(t) {
 const CFG = {
   provider: 'gemini',
   apiKey: 'test-key',
-  model: 'gemini-2.5-flash',
+  model: 'gemini-3.8-flash',
 };
 
 beforeEach(() => {

@@ -505,6 +505,11 @@ existing equivalent instead and marked the step accordingly:
   browsers installed — smoke deferred to your machine.
 - Docs: README rewritten (features/Pages/keys/privacy),
   FEATURES.md, BUGS_FIXED.md, CREDITS.md, DEMO_SCRIPT.md.
+- Post-session (2026-09-29, with user's key): smoke test caught
+  a stale default — Google retired 2.x flash for new users
+  (404: use 3.8-flash). Defaults bumped client+server
+  (`gemini-3.8-flash`), ai-smoke PASS/PASS with a real key
+  after a transient 503/429 spike. Server 31/31, llm 16/16.
 - NOT done (carries): Supabase/RLS, WebLLM, study groups,
   Paths unlocks, card drawer, Deck Insights charts, cloze/
   speaking/learn-path/mock-exam, backlog spread, suspend/bury,

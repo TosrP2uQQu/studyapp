@@ -92,7 +92,7 @@ describe('gemini adapter', () => {
       feature: 't',
     });
     assert.equal(text, 'fine');
-    assert.ok(calls[0].url.includes('gemini-2.0-flash:generateContent'));
+    assert.ok(calls[0].url.includes('gemini-3.8-flash:generateContent'));
     assert.ok(calls[0].url.includes('key=gkey'));
     const body = JSON.parse(calls[0].options.body);
     assert.ok(Array.isArray(body.contents[0].parts));
