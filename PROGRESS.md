@@ -510,6 +510,17 @@ existing equivalent instead and marked the step accordingly:
   (404: use 3.8-flash). Defaults bumped client+server
   (`gemini-3.8-flash`), ai-smoke PASS/PASS with a real key
   after a transient 503/429 spike. Server 31/31, llm 16/16.
+- Post-session (2026-09-29, live-site bugs): stuck update
+  prompt was my bug — `useRegisterSW().needRefresh` is a
+  `[bool, setter]` tuple in v1.x, always truthy; destructured
+  properly now. Signup on static hosting had no backend, so a
+  full browser backend landed: `localStore` (tables), `localSm2`
+  (SM-2/review/stats/PBKDF2 ports), `localBackend` (route parity
+  for all ~30 endpoints incl. quiz build/grade, AI grade via
+  browser key, import/export, undo). `api.js` tries the server
+  first and flips to browser data on dead-server/HTML-404 only
+  (real HTTP errors never masked); sidebar shows an offline
+  badge. 9 new tests, client 120/120, build green.
 - NOT done (carries): Supabase/RLS, WebLLM, study groups,
   Paths unlocks, card drawer, Deck Insights charts, cloze/
   speaking/learn-path/mock-exam, backlog spread, suspend/bury,
