@@ -1,0 +1,20 @@
+# Build outputs
+client/dist/
+client/.vite/
+
+# Dependencies
+node_modules/
+studyapp/node_modules/
+studyapp/client/node_modules/
+studyapp/server/node_modules/
+client/node_modules/
+server/node_modules/
+
+# Local dev secrets and user data (never commit)
+server/.env
+server/data/
+*.log
+
+# OS noise
+.DS_Store
+Thumbs.db
