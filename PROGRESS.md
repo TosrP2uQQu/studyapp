@@ -369,3 +369,31 @@ existing equivalent instead and marked the step accordingly:
 - CARRY: card drawer timeline, Deck Insights charts, leech
   action panel (split/mnemonic/suspend), confidence step UI,
   "ask tutor about hardest 3" (needs T5 Tutor).
+
+## T5. Tutor + videos + explainers (done)
+- Tutor (`/tutor`, sidebar): deck-aware chat, 8 modes + 3 depths,
+  chips (simpler/example/why/test/make-cards-to-clipboard),
+  streaming + Stop, retry, copy, clear, local history (last 20
+  sent). `tutorPrompt.js` rules: pedagogy, 150 words, one
+  question, level-adapt, no fabricated sources/URLs, uncertainty,
+  LaTeX, card-as-data, distress rule (112 EU + findahelpline).
+  Entry points: sidebar, "Ask tutor" in study, "hardest 3" in
+  session summary (handoff via browser store). No-key → inline
+  setup card. 77/77 client green.
+- Videos: query-only find (3 offline queries, incl. reputable
+  channels, never model URLs) → youtube search tabs; optional
+  Data API key (browser store) → result cards; attach URL (strict
+  11-char regex, t/start) → click-to-load nocookie embeds.
+- Diagrams: AI SVG → strict allow-list sanitize → `<img
+  src="data:…">` only; cache-on-card deferred (shown in chat).
+  Maths: escaped `$…$` runs (KaTeX lazy-load carried to T9).
+- Explainers: registry + keyword suggest (EN+LT), Pythagoras
+  (sliders + proof toggle) and Line y=mx+b (drag + keyboard
+  sliders), localised captions, reduced-motion safe.
+- i18n: +49 keys en/ru/lt. Parity held.
+- QA gate: server 29/29 + client 77/77 + build green. Playwright
+  NOT run: no browsers installed in this env (package fetchable,
+  binaries not); smoke deferred to final QA if time permits.
+- CARRY: WebLLM, tutor side-sheet in study, video→cards
+  transcript uses Smart Import manually, quadratic/triangle/
+  circle explainers, KaTeX proper render.

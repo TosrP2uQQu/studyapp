@@ -11,6 +11,7 @@ export default function Sidebar() {
   const links = [
     { to: '/', label: t('nav.dashboard'), end: true },
     { to: '/mixed', label: t('nav.mixed') },
+    { to: '/tutor', label: t('nav.tutor') },
     { to: '/stats', label: t('nav.stats') },
     { to: '/profile', label: t('nav.profile') },
     { to: '/settings', label: t('nav.settings') },

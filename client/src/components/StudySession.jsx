@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../context/AuthContext';
 import FlashCard from './FlashCard';
@@ -22,6 +22,7 @@ import {
 } from '../lib/storage';
 import { toNFC } from '../lib/text';
 import HistoryStrip from './HistoryStrip';
+import { getAdapter } from '../lib/storage';
 
 // Tier colors reuse the rating palette's meaning: correct reads like Easy,
 // almost like OK, incorrect like Hard.
@@ -103,6 +104,7 @@ export default function StudySession({
   const startRef = useRef(Date.now());
   const shownAtRef = useRef(Date.now());
   const gradeAllStarted = useRef(false);
+  const navigate = useNavigate();
   const { user: sessionUser, t, lang } = useAuth();
   const flipStyle = sessionUser?.appearance?.flipStyle || 'flip';
 
@@ -335,6 +337,24 @@ export default function StudySession({
       setUndoing(false);
     }
   }, [undoStack, rating, undoing, reviewEndpoint, resetForNext, notify, cram, t]);
+
+  // "Ask tutor" handoff: stash card context, Tutor picks it up.
+  const askTutor = useCallback((list) => {
+    try {
+      getAdapter().set('tutor.context', {
+        cards: (list || [card]).filter(Boolean).map((c) => ({
+          id: c.id,
+          front: c.front,
+          back: c.back,
+        })),
+        deckId: gradeDeckId || (card && card.deckId) || null,
+      });
+    } catch {
+      /* Tutor still opens, without context */
+    }
+    const did = gradeDeckId || (card && card.deckId);
+    navigate(did ? `/tutor?deck=${did}&card=${card.id}` : '/tutor');
+  }, [card, gradeDeckId, navigate]);
 
   // Re-drill the Hard ones: cram over the hard-rated cards only.
   // Scheduling untouched (rate() takes the cram branch above).
@@ -593,6 +613,18 @@ export default function StudySession({
                 {t('session.redrill')}
               </button>
             )}
+            {!cram && sessionLog.length > 0 && (
+              <button
+                onClick={() => {
+                  const hard = sessionLog.filter((e) => e.rating === 'hard');
+                  const rest = sessionLog.filter((e) => e.rating !== 'hard');
+                  askTutor([...hard, ...rest].slice(0, 3).map((e) => e.card));
+                }}
+                className="mt-2 block rounded-lg border border-line px-5 py-2.5 text-sm font-semibold hover:bg-canvas"
+              >
+                {t('tutor.hardest3')}
+              </button>
+            )}
           </div>
         )}
         <Link to="/" className="mt-6 inline-block rounded-lg bg-ink px-6 py-2.5 font-semibold text-white hover:opacity-90">
@@ -761,6 +793,12 @@ export default function StudySession({
                   serverRows={deckReviews}
                   nextDue={card.progress && card.progress.nextReviewDate}
                 />
+                <button
+                  onClick={() => askTutor()}
+                  className="mt-3 min-h-[44px] text-sm font-medium text-ink hover:underline"
+                >
+                  {t('tutor.askTutor')}
+                </button>
                 {elaboration && (
                   <div className="mt-6 rounded-2xl bg-surface p-6 shadow-md">
                     <label htmlFor="study-explain" className="mb-1 block text-sm font-medium">

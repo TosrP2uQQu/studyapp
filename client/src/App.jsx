@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import Onboarding from './pages/Onboarding';
 import Tutorial from './pages/Tutorial';
 import Profile from './pages/Profile';
+import Tutor from './pages/Tutor';
 import Dashboard from './pages/Dashboard';
 import DeckEditor from './pages/DeckEditor';
 import Study from './pages/Study';
@@ -55,6 +56,7 @@ function Shell() {
           }
         />
         <Route path="/profile" element={wrap(<Profile notify={notify} />)} />
+        <Route path="/tutor" element={wrap(<Tutor notify={notify} />, true)} />
         <Route path="/" element={wrap(<Dashboard notify={notify} />)} />
         <Route path="/decks/new" element={wrap(<DeckEditor notify={notify} />, true)} />
         <Route path="/decks/:id/edit" element={wrap(<DeckEditor notify={notify} />)} />
