@@ -21,6 +21,7 @@ import {
   saveCursor,
 } from '../lib/storage';
 import { toNFC } from '../lib/text';
+import HistoryStrip from './HistoryStrip';
 
 // Tier colors reuse the rating palette's meaning: correct reads like Easy,
 // almost like OK, incorrect like Hard.
@@ -48,6 +49,7 @@ function TierBadge({ tier }) {
 // elaboration: null, or { deckType, aiConfigured } to show Explain/Why boxes.
 // cursorKey: sessionStorage key for the resume cursor (deck id or 'mixed').
 // mode: label written into the review log ('flip', 'mixed', ...).
+// deckReviews: server rating history for this deck (history strip).
 export default function StudySession({
   cards: initialCards,
   reviewEndpoint,
@@ -62,9 +64,13 @@ export default function StudySession({
   cardMeta,
   cursorKey,
   mode,
+  deckReviews,
   notify,
 }) {
-  const [cards] = useState(initialCards);
+  const [cards, setCards] = useState(initialCards);
+  const [cram, setCram] = useState(false);
+  // Full session record for the summary grid (never removed by undo).
+  const [sessionLog, setSessionLog] = useState([]);
   const startIndex = () => {
     if (!cursorKey) return 0;
     const at = loadCursor(cursorKey);
@@ -224,13 +230,31 @@ export default function StudySession({
   const rate = useCallback(
     async (value) => {
       if (!card || rating) return;
+      const ms = Date.now() - shownAtRef.current;
+      // Cram re-drill: practice only, never touches scheduling.
+      if (cram) {
+        try {
+          logReview({
+            cardId: card.id,
+            deckId: card.deckId || gradeDeckId || null,
+            rating: value,
+            mode: 'cram',
+            ms,
+          });
+        } catch {
+          /* mirror best-effort */
+        }
+        setSessionLog((s) => [...s, { card, rating: value, ms }]);
+        resetForNext();
+        setIndex((i) => i + 1);
+        return;
+      }
       setRating(true);
       try {
-        const started = shownAtRef.current;
         const { data } = await api.post(reviewEndpoint(card), {
           rating: value,
           mode: mode || 'flip',
-          ms: Date.now() - started,
+          ms,
         });
         // Local mirror of the append-only log (instant UI, offline-safe).
         try {
@@ -240,7 +264,7 @@ export default function StudySession({
             deckId: card.deckId || gradeDeckId || null,
             rating: value,
             mode: mode || 'flip',
-            ms: Date.now() - started,
+            ms,
             newInterval:
               data && typeof data.interval === 'number'
                 ? data.interval
@@ -255,8 +279,11 @@ export default function StudySession({
             card,
             reviewId: data && data.reviewId,
             prevIndex: index,
+            rating: value,
+            ms,
           },
         ]);
+        setSessionLog((s) => [...s, { card, rating: value, ms }]);
         resetForNext();
         setIndex((i) => i + 1);
       } catch (err) {
@@ -265,7 +292,7 @@ export default function StudySession({
         setRating(false);
       }
     },
-    [card, rating, reviewEndpoint, resetForNext, notify, mode, gradeDeckId, index, t]
+    [card, rating, reviewEndpoint, resetForNext, notify, mode, gradeDeckId, index, cram, t]
   );
 
   // Undo the last rating: server restores the SM-2 snapshot, the local
@@ -273,6 +300,18 @@ export default function StudySession({
   const undoLast = useCallback(async () => {
     const top = undoStack[undoStack.length - 1];
     if (!top || rating || undoing) return;
+    // Cram undo is local-only (nothing was scheduled).
+    if (cram) {
+      try {
+        popUndo();
+      } catch {
+        /* mirror best-effort */
+      }
+      setUndoStack((s) => s.slice(0, -1));
+      resetForNext();
+      setIndex(top.prevIndex);
+      return;
+    }
     if (!top.reviewId) {
       notify(t('study.rateFailed'), 'error');
       return;
@@ -295,7 +334,22 @@ export default function StudySession({
     } finally {
       setUndoing(false);
     }
-  }, [undoStack, rating, undoing, reviewEndpoint, resetForNext, notify, t]);
+  }, [undoStack, rating, undoing, reviewEndpoint, resetForNext, notify, cram, t]);
+
+  // Re-drill the Hard ones: cram over the hard-rated cards only.
+  // Scheduling untouched (rate() takes the cram branch above).
+  const redrillHard = useCallback(() => {
+    const hardCards = sessionLog
+      .filter((e) => e.rating === 'hard')
+      .map((e) => e.card);
+    if (hardCards.length === 0) return;
+    setCards(hardCards);
+    setSessionLog([]);
+    setUndoStack([]);
+    setCram(true);
+    resetForNext();
+    setIndex(0);
+  }, [sessionLog, resetForNext]);
 
   const flip = useCallback(() => {
     if (!card || flipped || needGuess) return;
@@ -491,6 +545,7 @@ export default function StudySession({
       }
     }
     const mins = Math.floor(elapsed / 60);
+    const hardCount = sessionLog.filter((e) => e.rating === 'hard').length;
     return (
       <div className="rounded-2xl bg-surface p-10 text-center shadow-md">
         <h1 className="font-serif text-3xl font-semibold">{t('study.completeTitle')}</h1>
@@ -498,6 +553,48 @@ export default function StudySession({
           {t('study.completeBody', { n: `${cards.length} ${cardWord(lang, cards.length)}` })}
           {mins > 0 ? ` ${t('study.completeMins', { m: mins })}` : ''} {t('study.completeGood')}
         </p>
+        {cram && (
+          <p className="mt-2 text-sm text-muted">{t('session.cramNote')}</p>
+        )}
+        {sessionLog.length > 0 && (
+          <div className="mx-auto mt-6 max-w-2xl text-left">
+            <h2 className="font-serif text-xl font-semibold">{t('session.summary')}</h2>
+            <ul className="mt-3 space-y-2">
+              {sessionLog.map((e, i) => (
+                <li
+                  key={i}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-line bg-canvas px-4 py-2.5"
+                >
+                  <span className="truncate font-medium">{e.card.front}</span>
+                  <span className="flex shrink-0 items-center gap-2 text-sm text-muted">
+                    <span
+                      aria-hidden="true"
+                      className={`inline-block h-2.5 w-2.5 ${
+                        e.rating === 'hard'
+                          ? 'bg-clay'
+                          : e.rating === 'ok'
+                            ? 'bg-sand'
+                            : 'bg-leaf'
+                      } rounded-full`}
+                    />
+                    {t('rate.' + e.rating)}
+                    {typeof e.ms === 'number' && (
+                      <span>{(e.ms / 1000).toFixed(0)}s</span>
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {!cram && hardCount > 0 && (
+              <button
+                onClick={redrillHard}
+                className="mt-4 rounded-lg border border-line px-5 py-2.5 text-sm font-semibold hover:bg-canvas"
+              >
+                {t('session.redrill')}
+              </button>
+            )}
+          </div>
+        )}
         <Link to="/" className="mt-6 inline-block rounded-lg bg-ink px-6 py-2.5 font-semibold text-white hover:opacity-90">
           {t('mixed.back')}
         </Link>
@@ -511,6 +608,7 @@ export default function StudySession({
         <span>
           {t('study.cardOf', { i: index + 1, n: cards.length })}
           {cardMeta ? `, ${cardMeta(card)}` : ''}
+          {cram ? ` · ${t('session.cramNote')}` : ''}
         </span>
         <span className="flex items-center gap-4">
           {undoStack.length > 0 && (
@@ -603,6 +701,11 @@ export default function StudySession({
                   <p className="mt-1 text-muted">{t('study.answerIs')} {card.back}</p>
                 </div>
                 <RatingButtons onRate={rate} disabled={rating} />
+                <HistoryStrip
+                  cardId={card.id}
+                  serverRows={deckReviews}
+                  nextDue={card.progress && card.progress.nextReviewDate}
+                />
               </>
             )}
           </div>
@@ -653,6 +756,11 @@ export default function StudySession({
                   </div>
                 )}
                 <RatingButtons onRate={rate} disabled={rating} />
+                <HistoryStrip
+                  cardId={card.id}
+                  serverRows={deckReviews}
+                  nextDue={card.progress && card.progress.nextReviewDate}
+                />
                 {elaboration && (
                   <div className="mt-6 rounded-2xl bg-surface p-6 shadow-md">
                     <label htmlFor="study-explain" className="mb-1 block text-sm font-medium">

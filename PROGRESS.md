@@ -349,3 +349,23 @@ existing equivalent instead and marked the step accordingly:
   never prints key; verified clean-fail without key).
 - CARRY: photo-vision + PDF import UI, server-key migration to
   browser-only, quiz/grading still on server paths.
+
+## T4. Rating history (done)
+- Server: `GET /decks/:id/reviews` (user's rows, undone excluded,
+  cap 500); recall-sheet cards now carry `stats` (last, H/O/E,
+  total, trend, difficulty 0-100, leech) via pure
+  `server/reviewStats.js`. Server 29/29 green (incl. 6 new).
+- Study screen: `HistoryStrip` under the card (last 8 merged
+  server+mirror rows, icon dots with date/rating/mode/interval
+  tooltips, counts + next-due line, persisted hide toggle).
+- Recall sheet rebuilt as a filterable table: last-rating chip,
+  H/O/E counts, trend (improving/needs-attention/steady),
+  difficulty, due date, leech badge; chips (Last Hard, Hard 3+,
+  Never, Stubborn, Due) + hardest-first sort.
+- Session summary: per-card grid (chip + response seconds) +
+  "Re-drill the Hard ones" cram mode (local-only ratings,
+  scheduling untouched, bannered). 64/64 client green.
+- i18n: +23 keys en/ru/lt. Parity held.
+- CARRY: card drawer timeline, Deck Insights charts, leech
+  action panel (split/mnemonic/suspend), confidence step UI,
+  "ask tutor about hardest 3" (needs T5 Tutor).

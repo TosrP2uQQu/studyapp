@@ -10,6 +10,7 @@ export default function Study({ notify }) {
   const { user, t, lang } = useAuth();
   const [deck, setDeck] = useState(null);
   const [due, setDue] = useState(null);
+  const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
     (async () => {
@@ -20,6 +21,12 @@ export default function Study({ notify }) {
         ]);
         setDeck(detail);
         setDue(study.due || []);
+        try {
+          const { data: hist } = await api.get(`/decks/${id}/reviews`);
+          setReviews(hist.reviews || []);
+        } catch {
+          setReviews([]);
+        }
       } catch (err) {
         notify(err.response?.data?.error || t('study.loadFailed'), 'error');
         setDue([]);
@@ -62,6 +69,7 @@ export default function Study({ notify }) {
         budgetMinutes={user?.studyPrefs?.minutesPerSession}
         cursorKey={id}
         mode="flip"
+        deckReviews={reviews}
         notify={notify}
       />
     </div>

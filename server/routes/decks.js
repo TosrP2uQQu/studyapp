@@ -327,14 +327,38 @@ router.get('/:id/recall-sheet', authMiddleware, (req, res) => {
   for (const p of allProgress) {
     if (p.userId === req.userId && p.deckId === deck.id) byCard.set(p.cardId, p);
   }
+  // Rating history per card from the append-only log.
+  const reviewStats = require('../reviewStats');
+  const allReviews = db.readReviews().filter(
+    (r) => r.userId === req.userId && r.deckId === deck.id && !r.undone
+  );
   const withRating = (deck.cards || []).map((c) => ({
     ...c,
     lastRating: byCard.get(c.id)?.lastRating ?? null,
     nextReviewDate: byCard.get(c.id)?.nextReviewDate ?? null,
+    stats: reviewStats.aggregateCard(c.id, allReviews),
   }));
   const hard = withRating.filter((c) => c.lastRating === 'hard');
   const rest = withRating.filter((c) => c.lastRating !== 'hard');
   res.json({ deckId: deck.id, hard, rest, all: withRating });
+});
+
+// GET /api/decks/:id/reviews — the user's rating history for a deck
+// (newest last, undone rows excluded, cap 500). Powers history strips.
+router.get('/:id/reviews', authMiddleware, (req, res) => {
+  const decks = db.readDecks();
+  const deck = decks.find((d) => d.id === req.params.id);
+  if (!deck) return res.status(404).json({ error: 'Deck not found' });
+  if (deck.ownerId !== req.userId && !isMember(req.userId, deck.id)) {
+    return res.status(403).json({ error: 'Not a member of this deck' });
+  }
+  const rows = db.readReviews()
+    .filter(
+      (r) => r.userId === req.userId && r.deckId === deck.id && !r.undone
+    )
+    .sort((a, b) => String(a.ts).localeCompare(String(b.ts)))
+    .slice(-500);
+  res.json({ deckId: deck.id, reviews: rows });
 });
 
 // PATCH /api/decks/:id/study-modes — owner only
